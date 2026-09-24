@@ -38,11 +38,31 @@ class PrefixMiddleware:
         self.wsgi_app = wsgi_app
 
     def __call__(self, environ, start_response):
-        path = environ.get("PATH_INFO", "")
-        if path.startswith("/api/index"):
-            environ["PATH_INFO"] = path[len("/api/index"):] or "/"
-        elif path.startswith("/api"):
-            environ["PATH_INFO"] = path[len("/api"):] or "/"
+        import urllib.parse
+        qs = urllib.parse.parse_qs(environ.get("QUERY_STRING", ""))
+        if "path" in qs and qs["path"][0]:
+            target_path = qs["path"][0]
+            while "//" in target_path:
+                target_path = target_path.replace("//", "/")
+            environ["PATH_INFO"] = target_path
+        else:
+            orig = (
+                environ.get("HTTP_X_MATCHED_PATH")
+                or environ.get("HTTP_X_FORWARDED_URI")
+                or environ.get("RAW_URI")
+            )
+            if orig:
+                clean = orig.split("?")[0]
+                if clean and not clean.startswith("/api/index"):
+                    environ["PATH_INFO"] = clean
+                elif clean.startswith("/api/index"):
+                    environ["PATH_INFO"] = clean[len("/api/index"):] or "/"
+            else:
+                path = environ.get("PATH_INFO", "")
+                if path.startswith("/api/index"):
+                    environ["PATH_INFO"] = path[len("/api/index"):] or "/"
+                elif path.startswith("/api"):
+                    environ["PATH_INFO"] = path[len("/api"):] or "/"
         return self.wsgi_app(environ, start_response)
 
 app.wsgi_app = PrefixMiddleware(app.wsgi_app)
