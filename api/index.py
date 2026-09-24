@@ -1,40 +1,267 @@
+import os
 import random
+import sqlite3
 from datetime import datetime
-from flask import Flask, request, redirect, url_for, session, render_template_string, flash
+from flask import (
+    Flask,
+    request,
+    redirect,
+    url_for,
+    session,
+    render_template_string,
+    flash,
+)
+
+# Optional dotenv loading for local development
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv()
+except ImportError:
+    pass
+
+# Optional psycopg2 import for PostgreSQL
+try:
+    import psycopg2
+    from psycopg2.extras import RealDictCursor
+
+    HAS_PSYCOPG2 = True
+except ImportError:
+    HAS_PSYCOPG2 = False
 
 app = Flask(__name__)
-app.secret_key = "banking-secret-key-super-secure"
+app.secret_key = os.environ.get("SECRET_KEY", "banking-secret-key-super-secure")
 
-# In-memory account database
-# Format: { "account_number": { "name": ..., "phone": ..., "pin": ..., "balance": ..., "transactions": [...] } }
-ACCOUNTS = {
-    "100001": {
-        "name": "Alex Morgan",
-        "phone": "9876543210",
-        "pin": "1234",
-        "balance": 2500.0,
-        "transactions": [
-            {
-                "type": "Initial Deposit",
-                "amount": 2500.0,
-                "details": "Opening Balance",
-                "balance": 2500.0,
-                "timestamp": "2026-09-20 10:30:00",
-            }
-        ],
-    }
-}
+# Database URL detection (Vercel Postgres, Neon, Supabase, or local)
+RAW_DATABASE_URL = os.environ.get("DATABASE_URL") or os.environ.get(
+    "POSTGRES_URL"
+)
+if RAW_DATABASE_URL and RAW_DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = RAW_DATABASE_URL.replace("postgres://", "postgresql://", 1)
+else:
+    DATABASE_URL = RAW_DATABASE_URL
+
+SQLITE_PATH = os.path.join(
+    "/tmp" if os.environ.get("VERCEL") else ".", "banking.db"
+)
 
 
-def generate_account_number():
-    """Generate a unique 6-digit account number using the random module."""
-    while True:
-        acc_no = str(random.randint(100000, 999999))
-        if acc_no not in ACCOUNTS:
-            return acc_no
+class DatabaseManager:
+
+    @staticmethod
+    def get_connection():
+        """Connect to PostgreSQL if configured, otherwise fallback to SQLite."""
+        if DATABASE_URL and HAS_PSYCOPG2:
+            try:
+                conn = psycopg2.connect(DATABASE_URL)
+                return conn, "PostgreSQL"
+            except Exception as e:
+                app.logger.warning(
+                    f"PostgreSQL connection failed ({e}), falling back to SQLite."
+                )
+
+        # Fallback to local SQLite
+        conn = sqlite3.connect(SQLITE_PATH)
+        conn.row_factory = sqlite3.Row
+        return conn, "SQLite (Local)"
+
+    @classmethod
+    def get_db_type(cls):
+        try:
+            conn, db_type = cls.get_connection()
+            conn.close()
+            return db_type
+        except Exception:
+            return "Unavailable"
+
+    @classmethod
+    def init_db(cls):
+        """Create tables if they do not exist and seed the demo account."""
+        conn, db_type = cls.get_connection()
+        cur = conn.cursor()
+        is_pg = db_type == "PostgreSQL"
+
+        if is_pg:
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS accounts (
+                    account_no VARCHAR(6) PRIMARY KEY,
+                    name VARCHAR(100) NOT NULL,
+                    phone VARCHAR(20) NOT NULL,
+                    pin VARCHAR(4) NOT NULL,
+                    balance NUMERIC(14, 2) NOT NULL DEFAULT 0.00,
+                    created_at VARCHAR(30)
+                );
+            """)
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS transactions (
+                    id SERIAL PRIMARY KEY,
+                    account_no VARCHAR(6) REFERENCES accounts(account_no) ON DELETE CASCADE,
+                    type VARCHAR(50) NOT NULL,
+                    amount NUMERIC(14, 2) NOT NULL,
+                    details TEXT,
+                    balance NUMERIC(14, 2) NOT NULL,
+                    timestamp VARCHAR(30) NOT NULL
+                );
+            """)
+        else:
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS accounts (
+                    account_no VARCHAR(6) PRIMARY KEY,
+                    name VARCHAR(100) NOT NULL,
+                    phone VARCHAR(20) NOT NULL,
+                    pin VARCHAR(4) NOT NULL,
+                    balance REAL NOT NULL DEFAULT 0.00,
+                    created_at VARCHAR(30)
+                );
+            """)
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS transactions (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    account_no VARCHAR(6) REFERENCES accounts(account_no) ON DELETE CASCADE,
+                    type VARCHAR(50) NOT NULL,
+                    amount REAL NOT NULL,
+                    details TEXT,
+                    balance REAL NOT NULL,
+                    timestamp VARCHAR(30) NOT NULL
+                );
+            """)
+        conn.commit()
+
+        # Seed initial demo account if not exists
+        check_q = (
+            "SELECT account_no FROM accounts WHERE account_no = %s"
+            if is_pg
+            else "SELECT account_no FROM accounts WHERE account_no = ?"
+        )
+        cur.execute(check_q, ("100001",))
+        if not cur.fetchone():
+            ins_acc = (
+                """
+                INSERT INTO accounts (account_no, name, phone, pin, balance, created_at)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """
+                if is_pg
+                else """
+                INSERT INTO accounts (account_no, name, phone, pin, balance, created_at)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """
+            )
+            cur.execute(
+                ins_acc,
+                (
+                    "100001",
+                    "Alex Morgan",
+                    "9876543210",
+                    "1234",
+                    2500.0,
+                    "2026-09-20 10:30:00",
+                ),
+            )
+
+            ins_tx = (
+                """
+                INSERT INTO transactions (account_no, type, amount, details, balance, timestamp)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """
+                if is_pg
+                else """
+                INSERT INTO transactions (account_no, type, amount, details, balance, timestamp)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """
+            )
+            cur.execute(
+                ins_tx,
+                (
+                    "100001",
+                    "Initial Deposit",
+                    2500.0,
+                    "Opening Balance",
+                    2500.0,
+                    "2026-09-20 10:30:00",
+                ),
+            )
+            conn.commit()
+
+        cur.close()
+        conn.close()
+
+    @classmethod
+    def get_account_data(cls, account_no):
+        conn, db_type = cls.get_connection()
+        cur = conn.cursor()
+        is_pg = db_type == "PostgreSQL"
+        q = (
+            "SELECT account_no, name, phone, pin, balance, created_at FROM accounts WHERE account_no = %s"
+            if is_pg
+            else "SELECT account_no, name, phone, pin, balance, created_at FROM accounts WHERE account_no = ?"
+        )
+        cur.execute(q, (account_no,))
+        row = cur.fetchone()
+        if not row:
+            cur.close()
+            conn.close()
+            return None
+
+        account = {
+            "account_no": row[0],
+            "name": row[1],
+            "phone": row[2],
+            "pin": row[3],
+            "balance": float(row[4]),
+            "created_at": row[5],
+            "transactions": [],
+        }
+
+        tx_q = (
+            "SELECT type, amount, details, balance, timestamp FROM transactions WHERE account_no = %s ORDER BY id DESC"
+            if is_pg
+            else "SELECT type, amount, details, balance, timestamp FROM transactions WHERE account_no = ? ORDER BY id DESC"
+        )
+        cur.execute(tx_q, (account_no,))
+        tx_rows = cur.fetchall()
+        for t in tx_rows:
+            account["transactions"].append(
+                {
+                    "type": t[0],
+                    "amount": float(t[1]),
+                    "details": t[2],
+                    "balance": float(t[3]),
+                    "timestamp": t[4],
+                }
+            )
+
+        cur.close()
+        conn.close()
+        return account
+
+    @classmethod
+    def generate_unique_account_number(cls):
+        conn, db_type = cls.get_connection()
+        cur = conn.cursor()
+        is_pg = db_type == "PostgreSQL"
+        q = (
+            "SELECT 1 FROM accounts WHERE account_no = %s"
+            if is_pg
+            else "SELECT 1 FROM accounts WHERE account_no = ?"
+        )
+        while True:
+            candidate = str(random.randint(100000, 999999))
+            cur.execute(q, (candidate,))
+            if not cur.fetchone():
+                cur.close()
+                conn.close()
+                return candidate
 
 
-# Base modern HTML+CSS Template
+# Initialize DB on launch
+with app.app_context():
+    try:
+        DatabaseManager.init_db()
+    except Exception as e:
+        app.logger.error(f"Error during init_db: {e}")
+
+
+# Base Template
 BASE_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
@@ -123,6 +350,19 @@ BASE_TEMPLATE = """
             display: flex;
             align-items: center;
             gap: 1rem;
+        }
+
+        .db-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.78rem;
+            font-weight: 600;
+            padding: 0.35rem 0.75rem;
+            border-radius: 20px;
+            background: rgba(79, 70, 229, 0.15);
+            border: 1px solid rgba(79, 70, 229, 0.3);
+            color: #a5b4fc;
         }
 
         .user-pill {
@@ -549,6 +789,10 @@ BASE_TEMPLATE = """
             <span>ApexBank</span>
         </a>
         <div class="nav-actions">
+            <div class="db-badge">
+                <span>🗄️</span>
+                <span>{{ db_type }}</span>
+            </div>
             {% if session.get('account_no') %}
                 <div class="user-pill">
                     <span class="dot-online"></span>
@@ -586,7 +830,7 @@ BASE_TEMPLATE = """
     </div>
 
     <footer class="footer">
-        <p>ApexBank System &bull; Minimal Python Flask on Vercel Serverless &bull; Safe &amp; Fast</p>
+        <p>ApexBank System &bull; Database: {{ db_type }} &bull; Serverless Ready</p>
     </footer>
 </body>
 </html>
@@ -775,7 +1019,7 @@ DASHBOARD_TEMPLATE = (
                         </tr>
                     </thead>
                     <tbody>
-                        {% for tx in account.transactions|reverse %}
+                        {% for tx in account.transactions %}
                             <tr>
                                 <td style="color: var(--text-muted); font-size: 0.85rem;">{{ tx.timestamp }}</td>
                                 <td>
@@ -811,21 +1055,33 @@ DASHBOARD_TEMPLATE = (
 # Routes
 @app.route("/")
 def index():
-    if "account_no" in session and session["account_no"] in ACCOUNTS:
-        return redirect(url_for("dashboard"))
+    if "account_no" in session:
+        acc = DatabaseManager.get_account_data(session["account_no"])
+        if acc:
+            return redirect(url_for("dashboard"))
+        session.pop("account_no", None)
+
     return render_template_string(
-        LOGIN_REGISTER_TEMPLATE, mode="login", title="ApexBank – Login"
+        LOGIN_REGISTER_TEMPLATE,
+        mode="login",
+        title="ApexBank – Login",
+        db_type=DatabaseManager.get_db_type(),
     )
 
 
 @app.route("/register")
 def register_view():
-    if "account_no" in session and session["account_no"] in ACCOUNTS:
-        return redirect(url_for("dashboard"))
+    if "account_no" in session:
+        acc = DatabaseManager.get_account_data(session["account_no"])
+        if acc:
+            return redirect(url_for("dashboard"))
+        session.pop("account_no", None)
+
     return render_template_string(
         LOGIN_REGISTER_TEMPLATE,
         mode="register",
         title="ApexBank – Open Account",
+        db_type=DatabaseManager.get_db_type(),
     )
 
 
@@ -855,28 +1111,54 @@ def create_account():
         flash("Invalid initial deposit amount.", "error")
         return redirect(url_for("register_view"))
 
-    # Auto-generate 6-digit account number using random module
-    acc_no = generate_account_number()
+    acc_no = DatabaseManager.generate_unique_account_number()
     now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    ACCOUNTS[acc_no] = {
-        "name": name,
-        "phone": phone,
-        "pin": pin,
-        "balance": initial_deposit,
-        "transactions": [
-            {
-                "type": "Account Created",
-                "amount": initial_deposit,
-                "details": "Opening Balance",
-                "balance": initial_deposit,
-                "timestamp": now_str,
-            }
-        ],
-    }
+    conn, db_type = DatabaseManager.get_connection()
+    cur = conn.cursor()
+    is_pg = db_type == "PostgreSQL"
+
+    ins_acc = (
+        """
+        INSERT INTO accounts (account_no, name, phone, pin, balance, created_at)
+        VALUES (%s, %s, %s, %s, %s, %s)
+    """
+        if is_pg
+        else """
+        INSERT INTO accounts (account_no, name, phone, pin, balance, created_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """
+    )
+    cur.execute(ins_acc, (acc_no, name, phone, pin, initial_deposit, now_str))
+
+    ins_tx = (
+        """
+        INSERT INTO transactions (account_no, type, amount, details, balance, timestamp)
+        VALUES (%s, %s, %s, %s, %s, %s)
+    """
+        if is_pg
+        else """
+        INSERT INTO transactions (account_no, type, amount, details, balance, timestamp)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """
+    )
+    cur.execute(
+        ins_tx,
+        (
+            acc_no,
+            "Account Created",
+            initial_deposit,
+            "Opening Balance",
+            initial_deposit,
+            now_str,
+        ),
+    )
+    conn.commit()
+    cur.close()
+    conn.close()
 
     flash(
-        f"🎉 Account successfully created! Your 6-Digit Account Number is {acc_no}. Please save it and sign in.",
+        f"🎉 Account successfully created in {db_type}! Your 6-Digit Account Number is {acc_no}. Please save it and sign in.",
         "success",
     )
     return redirect(url_for("index"))
@@ -891,7 +1173,7 @@ def login():
         flash("Account Number and PIN are required.", "error")
         return redirect(url_for("index"))
 
-    account = ACCOUNTS.get(acc_no)
+    account = DatabaseManager.get_account_data(acc_no)
     if not account or account.get("pin") != pin:
         flash("Invalid Account Number or PIN. Please try again.", "error")
         return redirect(url_for("index"))
@@ -904,24 +1186,29 @@ def login():
 @app.route("/dashboard")
 def dashboard():
     acc_no = session.get("account_no")
-    if not acc_no or acc_no not in ACCOUNTS:
-        session.pop("account_no", None)
+    if not acc_no:
         flash("Please log in to access your dashboard.", "info")
         return redirect(url_for("index"))
 
-    account = ACCOUNTS[acc_no]
+    account = DatabaseManager.get_account_data(acc_no)
+    if not account:
+        session.pop("account_no", None)
+        flash("Account not found. Please log in again.", "info")
+        return redirect(url_for("index"))
+
     return render_template_string(
         DASHBOARD_TEMPLATE,
         account=account,
         account_no=acc_no,
         title="ApexBank – Dashboard",
+        db_type=DatabaseManager.get_db_type(),
     )
 
 
 @app.route("/deposit", methods=["POST"])
 def deposit():
     acc_no = session.get("account_no")
-    if not acc_no or acc_no not in ACCOUNTS:
+    if not acc_no:
         return redirect(url_for("index"))
 
     amount_str = request.form.get("amount", "").strip()
@@ -934,22 +1221,50 @@ def deposit():
         flash("Please enter a valid numeric amount.", "error")
         return redirect(url_for("dashboard"))
 
-    account = ACCOUNTS[acc_no]
-    account["balance"] += amount
+    conn, db_type = DatabaseManager.get_connection()
+    cur = conn.cursor()
+    is_pg = db_type == "PostgreSQL"
+
+    cur.execute(
+        "SELECT balance FROM accounts WHERE account_no = %s"
+        if is_pg
+        else "SELECT balance FROM accounts WHERE account_no = ?",
+        (acc_no,),
+    )
+    row = cur.fetchone()
+    if not row:
+        cur.close()
+        conn.close()
+        return redirect(url_for("index"))
+
+    current_balance = float(row[0])
+    new_balance = current_balance + amount
     now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    account["transactions"].append(
-        {
-            "type": "Deposit",
-            "amount": amount,
-            "details": "Cash / Online Deposit",
-            "balance": account["balance"],
-            "timestamp": now_str,
-        }
+    cur.execute(
+        "UPDATE accounts SET balance = %s WHERE account_no = %s"
+        if is_pg
+        else "UPDATE accounts SET balance = ? WHERE account_no = ?",
+        (new_balance, acc_no),
     )
+    cur.execute(
+        """
+        INSERT INTO transactions (account_no, type, amount, details, balance, timestamp)
+        VALUES (%s, %s, %s, %s, %s, %s)
+    """
+        if is_pg
+        else """
+        INSERT INTO transactions (account_no, type, amount, details, balance, timestamp)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """,
+        (acc_no, "Deposit", amount, "Cash / Online Deposit", new_balance, now_str),
+    )
+    conn.commit()
+    cur.close()
+    conn.close()
 
     flash(
-        f"Successfully deposited ${amount:.2f}! New balance: ${account['balance']:.2f}",
+        f"Successfully deposited ${amount:.2f}! New balance: ${new_balance:.2f}",
         "success",
     )
     return redirect(url_for("dashboard"))
@@ -958,7 +1273,7 @@ def deposit():
 @app.route("/withdraw", methods=["POST"])
 def withdraw():
     acc_no = session.get("account_no")
-    if not acc_no or acc_no not in ACCOUNTS:
+    if not acc_no:
         return redirect(url_for("index"))
 
     amount_str = request.form.get("amount", "").strip()
@@ -971,29 +1286,66 @@ def withdraw():
         flash("Please enter a valid numeric amount.", "error")
         return redirect(url_for("dashboard"))
 
-    account = ACCOUNTS[acc_no]
-    if amount > account["balance"]:
+    conn, db_type = DatabaseManager.get_connection()
+    cur = conn.cursor()
+    is_pg = db_type == "PostgreSQL"
+
+    cur.execute(
+        "SELECT balance FROM accounts WHERE account_no = %s"
+        if is_pg
+        else "SELECT balance FROM accounts WHERE account_no = ?",
+        (acc_no,),
+    )
+    row = cur.fetchone()
+    if not row:
+        cur.close()
+        conn.close()
+        return redirect(url_for("index"))
+
+    current_balance = float(row[0])
+    if amount > current_balance:
+        cur.close()
+        conn.close()
         flash(
-            f"Insufficient funds! You attempted to withdraw ${amount:.2f} but available balance is ${account['balance']:.2f}.",
+            f"Insufficient funds! You attempted to withdraw ${amount:.2f} but available balance is ${current_balance:.2f}.",
             "error",
         )
         return redirect(url_for("dashboard"))
 
-    account["balance"] -= amount
+    new_balance = current_balance - amount
     now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    account["transactions"].append(
-        {
-            "type": "Withdrawal",
-            "amount": amount,
-            "details": "ATM / Counter Withdrawal",
-            "balance": account["balance"],
-            "timestamp": now_str,
-        }
+    cur.execute(
+        "UPDATE accounts SET balance = %s WHERE account_no = %s"
+        if is_pg
+        else "UPDATE accounts SET balance = ? WHERE account_no = ?",
+        (new_balance, acc_no),
     )
+    cur.execute(
+        """
+        INSERT INTO transactions (account_no, type, amount, details, balance, timestamp)
+        VALUES (%s, %s, %s, %s, %s, %s)
+    """
+        if is_pg
+        else """
+        INSERT INTO transactions (account_no, type, amount, details, balance, timestamp)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """,
+        (
+            acc_no,
+            "Withdrawal",
+            amount,
+            "ATM / Counter Withdrawal",
+            new_balance,
+            now_str,
+        ),
+    )
+    conn.commit()
+    cur.close()
+    conn.close()
 
     flash(
-        f"Successfully withdrew ${amount:.2f}. Remaining balance: ${account['balance']:.2f}",
+        f"Successfully withdrew ${amount:.2f}. Remaining balance: ${new_balance:.2f}",
         "success",
     )
     return redirect(url_for("dashboard"))
@@ -1002,7 +1354,7 @@ def withdraw():
 @app.route("/transfer", methods=["POST"])
 def transfer():
     acc_no = session.get("account_no")
-    if not acc_no or acc_no not in ACCOUNTS:
+    if not acc_no:
         return redirect(url_for("index"))
 
     recipient_acc = request.form.get("recipient_acc", "").strip()
@@ -1010,13 +1362,6 @@ def transfer():
 
     if recipient_acc == acc_no:
         flash("Cannot transfer money to your own account.", "error")
-        return redirect(url_for("dashboard"))
-
-    if recipient_acc not in ACCOUNTS:
-        flash(
-            f"Recipient account #{recipient_acc} not found in our banking registry.",
-            "error",
-        )
         return redirect(url_for("dashboard"))
 
     try:
@@ -1028,43 +1373,116 @@ def transfer():
         flash("Please enter a valid numeric amount.", "error")
         return redirect(url_for("dashboard"))
 
-    sender = ACCOUNTS[acc_no]
-    recipient = ACCOUNTS[recipient_acc]
+    conn, db_type = DatabaseManager.get_connection()
+    cur = conn.cursor()
+    is_pg = db_type == "PostgreSQL"
 
-    if amount > sender["balance"]:
+    # Fetch sender
+    cur.execute(
+        "SELECT name, balance FROM accounts WHERE account_no = %s"
+        if is_pg
+        else "SELECT name, balance FROM accounts WHERE account_no = ?",
+        (acc_no,),
+    )
+    sender = cur.fetchone()
+    if not sender:
+        cur.close()
+        conn.close()
+        return redirect(url_for("index"))
+
+    # Fetch recipient
+    cur.execute(
+        "SELECT name, balance FROM accounts WHERE account_no = %s"
+        if is_pg
+        else "SELECT name, balance FROM accounts WHERE account_no = ?",
+        (recipient_acc,),
+    )
+    recipient = cur.fetchone()
+    if not recipient:
+        cur.close()
+        conn.close()
         flash(
-            f"Insufficient funds! Current balance: ${sender['balance']:.2f}, transfer requested: ${amount:.2f}.",
+            f"Recipient account #{recipient_acc} not found in our banking registry.",
             "error",
         )
         return redirect(url_for("dashboard"))
 
-    # Perform transfer
-    sender["balance"] -= amount
-    recipient["balance"] += amount
+    sender_name, sender_balance = sender[0], float(sender[1])
+    recipient_name, recipient_balance = recipient[0], float(recipient[1])
+
+    if amount > sender_balance:
+        cur.close()
+        conn.close()
+        flash(
+            f"Insufficient funds! Current balance: ${sender_balance:.2f}, transfer requested: ${amount:.2f}.",
+            "error",
+        )
+        return redirect(url_for("dashboard"))
+
+    # Execute transfer transactionally
+    new_sender_bal = sender_balance - amount
+    new_recipient_bal = recipient_balance + amount
     now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    sender["transactions"].append(
-        {
-            "type": "Transfer Sent",
-            "amount": amount,
-            "details": f"To Acc #{recipient_acc} ({recipient['name']})",
-            "balance": sender["balance"],
-            "timestamp": now_str,
-        }
+    cur.execute(
+        "UPDATE accounts SET balance = %s WHERE account_no = %s"
+        if is_pg
+        else "UPDATE accounts SET balance = ? WHERE account_no = ?",
+        (new_sender_bal, acc_no),
+    )
+    cur.execute(
+        "UPDATE accounts SET balance = %s WHERE account_no = %s"
+        if is_pg
+        else "UPDATE accounts SET balance = ? WHERE account_no = ?",
+        (new_recipient_bal, recipient_acc),
     )
 
-    recipient["transactions"].append(
-        {
-            "type": "Transfer Received",
-            "amount": amount,
-            "details": f"From Acc #{acc_no} ({sender['name']})",
-            "balance": recipient["balance"],
-            "timestamp": now_str,
-        }
+    cur.execute(
+        """
+        INSERT INTO transactions (account_no, type, amount, details, balance, timestamp)
+        VALUES (%s, %s, %s, %s, %s, %s)
+    """
+        if is_pg
+        else """
+        INSERT INTO transactions (account_no, type, amount, details, balance, timestamp)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """,
+        (
+            acc_no,
+            "Transfer Sent",
+            amount,
+            f"To Acc #{recipient_acc} ({recipient_name})",
+            new_sender_bal,
+            now_str,
+        ),
     )
+
+    cur.execute(
+        """
+        INSERT INTO transactions (account_no, type, amount, details, balance, timestamp)
+        VALUES (%s, %s, %s, %s, %s, %s)
+    """
+        if is_pg
+        else """
+        INSERT INTO transactions (account_no, type, amount, details, balance, timestamp)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """,
+        (
+            recipient_acc,
+            "Transfer Received",
+            amount,
+            f"From Acc #{acc_no} ({sender_name})",
+            new_recipient_bal,
+            now_str,
+        ),
+    )
+
+    conn.commit()
+    cur.close()
+    conn.close()
 
     flash(
-        f"Transferred ${amount:.2f} to {recipient['name']} (#{recipient_acc}) successfully!",
+        f"Transferred ${amount:.2f} to {recipient_name} (#{recipient_acc}) successfully!",
         "success",
     )
     return redirect(url_for("dashboard"))
@@ -1073,26 +1491,51 @@ def transfer():
 @app.route("/change-pin", methods=["POST"])
 def change_pin():
     acc_no = session.get("account_no")
-    if not acc_no or acc_no not in ACCOUNTS:
+    if not acc_no:
         return redirect(url_for("index"))
 
     old_pin = request.form.get("old_pin", "").strip()
     new_pin = request.form.get("new_pin", "").strip()
 
-    account = ACCOUNTS[acc_no]
-    if account["pin"] != old_pin:
+    conn, db_type = DatabaseManager.get_connection()
+    cur = conn.cursor()
+    is_pg = db_type == "PostgreSQL"
+
+    cur.execute(
+        "SELECT pin FROM accounts WHERE account_no = %s"
+        if is_pg
+        else "SELECT pin FROM accounts WHERE account_no = ?",
+        (acc_no,),
+    )
+    row = cur.fetchone()
+    if not row or row[0] != old_pin:
+        cur.close()
+        conn.close()
         flash("Current PIN is incorrect.", "error")
         return redirect(url_for("dashboard"))
 
     if not new_pin.isdigit() or len(new_pin) != 4:
+        cur.close()
+        conn.close()
         flash("New PIN must be exactly 4 numeric digits.", "error")
         return redirect(url_for("dashboard"))
 
     if new_pin == old_pin:
+        cur.close()
+        conn.close()
         flash("New PIN must be different from current PIN.", "error")
         return redirect(url_for("dashboard"))
 
-    account["pin"] = new_pin
+    cur.execute(
+        "UPDATE accounts SET pin = %s WHERE account_no = %s"
+        if is_pg
+        else "UPDATE accounts SET pin = ? WHERE account_no = ?",
+        (new_pin, acc_no),
+    )
+    conn.commit()
+    cur.close()
+    conn.close()
+
     flash("Security PIN updated successfully!", "success")
     return redirect(url_for("dashboard"))
 
