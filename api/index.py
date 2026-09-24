@@ -32,6 +32,21 @@ except ImportError:
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "banking-secret-key-super-secure")
 
+class PrefixMiddleware:
+    """Normalize Vercel rewrite paths (/api/index or /api) to standard Flask routes."""
+    def __init__(self, wsgi_app):
+        self.wsgi_app = wsgi_app
+
+    def __call__(self, environ, start_response):
+        path = environ.get("PATH_INFO", "")
+        if path.startswith("/api/index"):
+            environ["PATH_INFO"] = path[len("/api/index"):] or "/"
+        elif path.startswith("/api"):
+            environ["PATH_INFO"] = path[len("/api"):] or "/"
+        return self.wsgi_app(environ, start_response)
+
+app.wsgi_app = PrefixMiddleware(app.wsgi_app)
+
 # Database URL detection (Vercel Postgres, Neon, Supabase, or local)
 RAW_DATABASE_URL = os.environ.get("DATABASE_URL") or os.environ.get(
     "POSTGRES_URL"
