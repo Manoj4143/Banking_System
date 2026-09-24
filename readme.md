@@ -128,17 +128,3 @@ For instant testing, a pre-seeded account is available:
 - **Initial Balance:** `$2,500.00`
 
 ---
-
-## ☁️ Deploying to Vercel
-
-1. Push your latest code to GitHub:
-   ```bash
-   git add .
-   git commit -m "Update banking project"
-   git push origin main
-   ```
-2. Go to [Vercel](https://vercel.com/) and click **"Add New Project"**.
-3. Import your `Banking_System` repository.
-4. *(Optional)* In **Project Settings > Environment Variables**, add:
-   - `DATABASE_URL` = Your cloud PostgreSQL URL (from Neon, Supabase, or Vercel Postgres).
-5. Click **Deploy**. Vercel will automatically build the serverless Python function in `api/index.py`.
