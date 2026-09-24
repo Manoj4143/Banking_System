@@ -586,92 +586,6 @@ BASE_TEMPLATE = """
             color: var(--text-muted);
         }
 
-        /* 3D Floating Cards Graphic */
-        .orbital-wrapper {
-            position: relative;
-            width: 100%;
-            height: 380px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .radar-circle {
-            position: absolute;
-            border-radius: 50%;
-            border: 1px dashed rgba(6, 78, 59, 0.12);
-            pointer-events: none;
-        }
-
-        .radar-1 { width: 340px; height: 340px; }
-        .radar-2 { width: 250px; height: 250px; }
-
-        .floating-card-lime {
-            position: absolute;
-            width: 270px;
-            height: 165px;
-            background: linear-gradient(135deg, #b1f818 0%, #84cc16 100%);
-            border-radius: 18px;
-            padding: 1.25rem;
-            top: 20px;
-            right: 25px;
-            box-shadow: 0 20px 40px -10px rgba(132, 204, 22, 0.4);
-            transform: rotate(5deg);
-            z-index: 2;
-            color: #0c1a06;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-
-        .floating-card-emerald {
-            position: absolute;
-            width: 270px;
-            height: 165px;
-            background: linear-gradient(135deg, #003527 0%, #064e3b 100%);
-            border-radius: 18px;
-            padding: 1.25rem;
-            bottom: 35px;
-            left: 25px;
-            box-shadow: 0 24px 48px -12px rgba(6, 78, 59, 0.4);
-            transform: rotate(-7deg);
-            z-index: 3;
-            color: #ffffff;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-
-        .floating-stat-pill {
-            position: absolute;
-            top: 25px;
-            left: 40px;
-            background: #ffffff;
-            border-radius: 14px;
-            padding: 0.6rem 0.9rem;
-            border: 1px solid var(--border-hairline);
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
-            z-index: 4;
-            display: flex;
-            align-items: center;
-            gap: 0.6rem;
-            font-size: 0.75rem;
-            font-weight: 700;
-        }
-
-        .mini-bars {
-            display: flex;
-            align-items: flex-end;
-            gap: 3px;
-            height: 18px;
-        }
-
-        .mini-bar {
-            width: 4px;
-            background: #b1f818;
-            border-radius: 2px;
-        }
-
         /* Form Card */
         .auth-card {
             background: var(--surface-card);
@@ -986,9 +900,9 @@ BASE_TEMPLATE = """
             <span>ApexBank</span>
         </a>
         <ul class="nav-links">
+            <li><a href="/" class="nav-link">Home</a></li>
             <li><a href="#features" class="nav-link">Features</a></li>
             <li><a href="#security" class="nav-link">Security</a></li>
-            <li><a href="#pricing" class="nav-link">Transfers</a></li>
         </ul>
         <div class="nav-actions">
             <div class="db-pill">
@@ -1041,6 +955,89 @@ LOGIN_REGISTER_TEMPLATE = (
     BASE_TEMPLATE.replace(
         "{% block content %}{% endblock %}",
         """
+    <!-- New Account Created Pop-Up Modal -->
+    {% if new_account %}
+    <div id="credentialModal" style="position: fixed; inset: 0; background: rgba(18, 22, 26, 0.75); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 9999; padding: 1.5rem; animation: fadeIn 0.3s ease;">
+        <div style="background: #ffffff; border-radius: 2rem; max-width: 470px; width: 100%; padding: 2.5rem; box-shadow: 0 35px 70px -15px rgba(0,0,0,0.35); border: 1px solid rgba(24, 28, 32, 0.08); text-align: center; position: relative;">
+            
+            <div style="width: 60px; height: 60px; border-radius: 50%; background: #b1f818; display: inline-flex; align-items: center; justify-content: center; font-size: 1.85rem; margin-bottom: 1rem; box-shadow: 0 8px 24px rgba(177, 248, 24, 0.6);">
+                🎉
+            </div>
+
+            <h2 style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.65rem; font-weight: 800; color: #003527; margin-bottom: 0.35rem;">
+                Account Created!
+            </h2>
+            <p style="font-size: 0.875rem; color: #52605b; margin-bottom: 1.5rem;">
+                Your account is ready in <strong>{{ db_type }}</strong>. Please copy and save your credentials:
+            </p>
+
+            <!-- Highlighted Credentials Box -->
+            <div style="background: #f7f9ff; border: 1.5px solid rgba(6, 78, 59, 0.15); border-radius: 1.25rem; padding: 1.25rem; text-align: left; margin-bottom: 1.5rem;">
+                
+                <div style="margin-bottom: 1rem;">
+                    <div style="font-size: 0.75rem; font-weight: 700; color: #52605b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.35rem;">
+                        6-Digit Account Number
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; background: #ffffff; padding: 0.75rem 1rem; border-radius: 12px; border: 1px solid rgba(24, 28, 32, 0.08);">
+                        <span id="popupAccNo" style="font-family: 'Plus Jakarta Sans', monospace; font-size: 1.65rem; font-weight: 800; color: #003527; letter-spacing: 0.08em;">
+                            {{ new_account.account_no }}
+                        </span>
+                        <button type="button" class="btn btn-sm btn-lime" onclick="copyAccNo('{{ new_account.account_no }}')" id="copyBtn">
+                            📋 Copy
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <div style="font-size: 0.75rem; font-weight: 700; color: #52605b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.35rem;">
+                        4-Digit Security PIN
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; background: #ffffff; padding: 0.75rem 1rem; border-radius: 12px; border: 1px solid rgba(24, 28, 32, 0.08);">
+                        <span style="font-family: 'Plus Jakarta Sans', monospace; font-size: 1.45rem; font-weight: 800; color: #064E3B; letter-spacing: 0.15em;">
+                            {{ new_account.pin }}
+                        </span>
+                        <span style="font-size: 0.75rem; color: #52605b; font-weight: 600;">(Keep PIN Private)</span>
+                    </div>
+                </div>
+
+                <div style="margin-top: 1rem; padding-top: 0.75rem; border-top: 1px dashed rgba(24, 28, 32, 0.12); display: flex; justify-content: space-between; font-size: 0.85rem;">
+                    <span style="color: #52605b;">Account Holder:</span>
+                    <strong>{{ new_account.name }}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-top: 0.35rem;">
+                    <span style="color: #52605b;">Initial Deposit:</span>
+                    <strong style="color: #064E3B;">${{ "%.2f"|format(new_account.balance) }}</strong>
+                </div>
+            </div>
+
+            <button type="button" class="btn btn-lime btn-block" style="padding: 0.9rem; font-size: 0.95rem;" onclick="dismissModal('{{ new_account.account_no }}')">
+                Continue to Sign In &rarr;
+            </button>
+        </div>
+    </div>
+
+    <script>
+        function copyAccNo(accNo) {
+            navigator.clipboard.writeText(accNo).then(function() {
+                var btn = document.getElementById('copyBtn');
+                btn.innerText = '✅ Copied!';
+                setTimeout(function() { btn.innerText = '📋 Copy'; }, 2000);
+            });
+        }
+
+        function dismissModal(accNo) {
+            var modal = document.getElementById('credentialModal');
+            if (modal) modal.style.display = 'none';
+            var accInput = document.querySelector('input[name="account_no"]');
+            if (accInput) {
+                accInput.value = accNo;
+                var pinInput = document.querySelector('input[name="pin"]');
+                if (pinInput) pinInput.focus();
+            }
+        }
+    </script>
+    {% endif %}
+
     <div class="hero-layout">
         <!-- Hero Editorial Left Column -->
         <div>
@@ -1313,11 +1310,15 @@ def index():
             return redirect(url_for("dashboard"))
         session.pop("account_no", None)
 
+    # Check if a newly created account modal should be displayed
+    new_account = session.pop("new_account_modal", None)
+
     return render_template_string(
         LOGIN_REGISTER_TEMPLATE,
         mode="login",
         title="ApexBank – Neo-Fintech Kinetic",
         db_type=DatabaseManager.get_db_type(),
+        new_account=new_account,
     )
 
 
@@ -1334,6 +1335,7 @@ def register_view():
         mode="register",
         title="ApexBank – Open Account",
         db_type=DatabaseManager.get_db_type(),
+        new_account=None,
     )
 
 
@@ -1409,10 +1411,14 @@ def create_account():
     cur.close()
     conn.close()
 
-    flash(
-        f"🎉 Account successfully created in {db_type}! Your 6-Digit Account Number is {acc_no}. Please save it and sign in.",
-        "success",
-    )
+    # Store in session to trigger the credentials pop-up modal
+    session["new_account_modal"] = {
+        "account_no": acc_no,
+        "pin": pin,
+        "name": name,
+        "balance": initial_deposit,
+    }
+
     return redirect(url_for("index"))
 
 
