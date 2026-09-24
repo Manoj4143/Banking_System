@@ -261,170 +261,152 @@ with app.app_context():
         app.logger.error(f"Error during init_db: {e}")
 
 
-# Base Template
+# Neo-Fintech Kinetic Single-File Template
 BASE_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ title if title else "ApexBank – Modern Banking" }}</title>
+    <title>{{ title if title else "ApexBank – Neo-Fintech Kinetic" }}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #0b0f19;
-            --card-bg: rgba(22, 30, 49, 0.75);
-            --card-border: rgba(255, 255, 255, 0.08);
-            --primary: #4f46e5;
-            --primary-hover: #4338ca;
-            --primary-glow: rgba(79, 70, 229, 0.35);
-            --accent: #06b6d4;
-            --success: #10b981;
-            --danger: #ef4444;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --input-bg: rgba(15, 23, 42, 0.8);
-            --radius-lg: 16px;
-            --radius-md: 10px;
+            /* Neo-Fintech Kinetic Design Tokens */
+            --surface-canvas: #f7f9ff;
+            --surface-card: #ffffff;
+            --surface-card-subtle: #f1f4f9;
+            --surface-obsidian: #12161A;
+            --primary-emerald: #064E3B;
+            --primary-deep: #003527;
+            --secondary-lime: #b1f818;
+            --secondary-lime-dim: #9ad900;
+            --secondary-lime-tint: rgba(177, 248, 24, 0.22);
+            --tertiary-teal: #004d47;
+            --text-dark: #181c20;
+            --text-muted: #52605b;
+            --border-hairline: rgba(24, 28, 32, 0.08);
+            --border-dark-hairline: rgba(255, 255, 255, 0.12);
+            
+            --radius-pill: 9999px;
+            --radius-card: 2rem;
+            --radius-card-sm: 1.25rem;
+            
+            --shadow-subtle: 0 20px 40px -15px rgba(18, 22, 26, 0.06);
+            --shadow-float: 0 25px 50px -12px rgba(6, 78, 59, 0.18);
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-family: 'Inter', sans-serif;
             -webkit-font-smoothing: antialiased;
         }
 
-        body {
-            background-color: var(--bg-color);
-            background-image: 
-                radial-gradient(at 0% 0%, rgba(79, 70, 229, 0.15) 0px, transparent 50%),
-                radial-gradient(at 100% 100%, rgba(6, 182, 212, 0.12) 0px, transparent 50%),
-                radial-gradient(at 50% 50%, rgba(15, 23, 42, 0.8) 0px, transparent 100%);
-            min-height: 100vh;
-            color: var(--text-main);
-            display: flex;
-            flex-direction: column;
+        h1, h2, h3, h4, .font-display {
+            font-family: 'Plus Jakarta Sans', sans-serif;
         }
 
+        body {
+            background-color: var(--surface-canvas);
+            color: var(--text-dark);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* Top Navigation */
         .navbar {
-            padding: 1.25rem 2rem;
+            padding: 1.1rem 2.5rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid var(--card-border);
-            backdrop-filter: blur(12px);
-            background: rgba(11, 15, 25, 0.6);
+            background: rgba(247, 249, 255, 0.85);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border-hairline);
             position: sticky;
             top: 0;
-            z-index: 50;
+            z-index: 100;
         }
 
         .brand {
             display: flex;
             align-items: center;
-            gap: 0.75rem;
+            gap: 0.65rem;
             text-decoration: none;
-            color: var(--text-main);
-            font-weight: 700;
-            font-size: 1.25rem;
-            letter-spacing: -0.02em;
+            color: var(--primary-deep);
+            font-size: 1.35rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
         }
 
-        .brand-icon {
-            width: 36px;
-            height: 36px;
-            background: linear-gradient(135deg, #4f46e5, #06b6d4);
+        .brand-badge {
+            width: 34px;
+            height: 34px;
+            background: var(--secondary-lime);
             border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.1rem;
-            box-shadow: 0 4px 14px var(--primary-glow);
+            font-size: 1rem;
+            font-weight: 800;
+            color: var(--primary-deep);
+            box-shadow: 0 4px 12px rgba(177, 248, 24, 0.4);
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 1.75rem;
+            list-style: none;
+        }
+
+        @media (max-width: 900px) {
+            .nav-links { display: none; }
+            .navbar { padding: 1rem 1.25rem; }
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-link:hover {
+            color: var(--primary-deep);
         }
 
         .nav-actions {
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: 0.85rem;
         }
 
-        .db-badge {
+        .db-pill {
             display: inline-flex;
             align-items: center;
-            gap: 0.4rem;
+            gap: 0.45rem;
             font-size: 0.78rem;
             font-weight: 600;
-            padding: 0.35rem 0.75rem;
-            border-radius: 20px;
-            background: rgba(79, 70, 229, 0.15);
-            border: 1px solid rgba(79, 70, 229, 0.3);
-            color: #a5b4fc;
+            padding: 0.35rem 0.85rem;
+            border-radius: var(--radius-pill);
+            background: #eef8f3;
+            color: var(--primary-emerald);
+            border: 1px solid rgba(6, 78, 59, 0.15);
         }
 
-        .user-pill {
-            display: flex;
-            align-items: center;
-            gap: 0.6rem;
-            background: rgba(255, 255, 255, 0.05);
-            padding: 0.4rem 0.9rem;
-            border-radius: 30px;
-            border: 1px solid var(--card-border);
-            font-size: 0.875rem;
-        }
-
-        .dot-online {
-            width: 8px;
-            height: 8px;
+        .dot-pulse {
+            width: 7px;
+            height: 7px;
             border-radius: 50%;
-            background-color: var(--success);
-            box-shadow: 0 0 8px var(--success);
-        }
-
-        .container {
-            max-width: 1080px;
-            margin: 2rem auto;
-            padding: 0 1.5rem;
-            width: 100%;
-            flex: 1;
-        }
-
-        /* Flash Messages */
-        .alerts {
-            margin-bottom: 1.5rem;
-        }
-
-        .alert {
-            padding: 0.9rem 1.25rem;
-            border-radius: var(--radius-md);
-            font-size: 0.9rem;
-            font-weight: 500;
-            margin-bottom: 0.75rem;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .alert-success {
-            background: rgba(16, 185, 129, 0.15);
-            border: 1px solid rgba(16, 185, 129, 0.3);
-            color: #6ee7b7;
-        }
-
-        .alert-error {
-            background: rgba(239, 68, 68, 0.15);
-            border: 1px solid rgba(239, 68, 68, 0.3);
-            color: #fca5a5;
-        }
-
-        .alert-info {
-            background: rgba(79, 70, 229, 0.15);
-            border: 1px solid rgba(79, 70, 229, 0.3);
-            color: #a5b4fc;
+            background: var(--primary-emerald);
+            box-shadow: 0 0 0 3px rgba(6, 78, 59, 0.18);
         }
 
         /* Buttons */
@@ -433,49 +415,61 @@ BASE_TEMPLATE = """
             align-items: center;
             justify-content: center;
             gap: 0.5rem;
-            padding: 0.7rem 1.3rem;
-            border-radius: var(--radius-md);
-            font-size: 0.9rem;
+            padding: 0.65rem 1.35rem;
+            border-radius: var(--radius-pill);
+            font-size: 0.875rem;
             font-weight: 600;
             text-decoration: none;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
             border: none;
         }
 
-        .btn-primary {
-            background: linear-gradient(135deg, var(--primary), #3b82f6);
-            color: #ffffff;
-            box-shadow: 0 4px 16px var(--primary-glow);
+        .btn-lime {
+            background: var(--secondary-lime);
+            color: var(--text-dark);
+            font-weight: 700;
         }
 
-        .btn-primary:hover {
-            opacity: 0.92;
+        .btn-lime:hover {
+            background: var(--secondary-lime-dim);
             transform: translateY(-1px);
+            box-shadow: 0 8px 20px -4px rgba(177, 248, 24, 0.6);
         }
 
-        .btn-secondary {
-            background: rgba(255, 255, 255, 0.06);
-            color: var(--text-main);
-            border: 1px solid var(--card-border);
+        .btn-forest {
+            background: var(--primary-emerald);
+            color: #ffffff;
         }
 
-        .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.1);
+        .btn-forest:hover {
+            background: #0b634c;
+            transform: translateY(-1px);
+            box-shadow: 0 8px 20px -4px rgba(6, 78, 59, 0.3);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--text-dark);
+            border: 1px solid var(--border-hairline);
+        }
+
+        .btn-ghost:hover {
+            background: rgba(0, 0, 0, 0.04);
         }
 
         .btn-danger {
-            background: rgba(239, 68, 68, 0.15);
-            color: #fca5a5;
-            border: 1px solid rgba(239, 68, 68, 0.3);
+            background: #ffebeb;
+            color: #b91c1c;
+            border: 1px solid rgba(185, 28, 28, 0.15);
         }
 
         .btn-danger:hover {
-            background: rgba(239, 68, 68, 0.25);
+            background: #fecaca;
         }
 
         .btn-sm {
-            padding: 0.4rem 0.8rem;
+            padding: 0.4rem 0.9rem;
             font-size: 0.8rem;
         }
 
@@ -483,112 +477,281 @@ BASE_TEMPLATE = """
             width: 100%;
         }
 
-        /* Auth Form Cards */
-        .auth-container {
-            max-width: 440px;
-            margin: 2.5rem auto;
+        /* Main Container */
+        .container {
+            max-width: 1180px;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+            width: 100%;
+            flex: 1;
         }
 
-        .card {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: var(--radius-lg);
-            padding: 2rem;
-            backdrop-filter: blur(16px);
-            box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4);
-        }
-
-        .card-header {
+        /* Alerts */
+        .alerts {
             margin-bottom: 1.5rem;
-            text-align: center;
         }
 
-        .card-title {
-            font-size: 1.45rem;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-        }
-
-        .card-subtitle {
-            color: var(--text-muted);
+        .alert {
+            padding: 0.85rem 1.25rem;
+            border-radius: 1rem;
             font-size: 0.875rem;
-            margin-top: 0.4rem;
+            font-weight: 500;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            animation: fadeIn 0.3s ease;
         }
 
-        /* Forms */
-        .form-group {
+        .alert-success {
+            background: #eefcf3;
+            border: 1px solid #bbf2d0;
+            color: #14532d;
+        }
+
+        .alert-error {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #991b1b;
+        }
+
+        .alert-info {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            color: #166534;
+        }
+
+        /* Hero Split View (Landing / Auth) */
+        .hero-layout {
+            display: grid;
+            grid-template-columns: 1.15fr 1fr;
+            gap: 3.5rem;
+            align-items: center;
+            margin-top: 1rem;
+            margin-bottom: 3.5rem;
+        }
+
+        @media (max-width: 960px) {
+            .hero-layout {
+                grid-template-columns: 1fr;
+                gap: 2.5rem;
+            }
+        }
+
+        .hero-headline {
+            font-size: 3.25rem;
+            font-weight: 800;
+            line-height: 1.1;
+            letter-spacing: -0.035em;
+            color: var(--text-dark);
             margin-bottom: 1.25rem;
+        }
+
+        @media (max-width: 600px) {
+            .hero-headline { font-size: 2.35rem; }
+        }
+
+        .badge-pill-lime {
+            display: inline-block;
+            background: var(--secondary-lime);
+            color: var(--primary-deep);
+            padding: 0.15rem 0.75rem;
+            border-radius: var(--radius-pill);
+            box-decoration-break: clone;
+            -webkit-box-decoration-break: clone;
+        }
+
+        .hero-subhead {
+            font-size: 1.05rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin-bottom: 2rem;
+            max-width: 520px;
+        }
+
+        .tag-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+            margin-top: 2rem;
+        }
+
+        .tag-pill {
+            padding: 0.35rem 0.85rem;
+            background: var(--surface-card);
+            border: 1px solid var(--border-hairline);
+            border-radius: var(--radius-pill);
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        /* 3D Floating Cards Graphic */
+        .orbital-wrapper {
+            position: relative;
+            width: 100%;
+            height: 380px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .radar-circle {
+            position: absolute;
+            border-radius: 50%;
+            border: 1px dashed rgba(6, 78, 59, 0.12);
+            pointer-events: none;
+        }
+
+        .radar-1 { width: 340px; height: 340px; }
+        .radar-2 { width: 250px; height: 250px; }
+
+        .floating-card-lime {
+            position: absolute;
+            width: 270px;
+            height: 165px;
+            background: linear-gradient(135deg, #b1f818 0%, #84cc16 100%);
+            border-radius: 18px;
+            padding: 1.25rem;
+            top: 20px;
+            right: 25px;
+            box-shadow: 0 20px 40px -10px rgba(132, 204, 22, 0.4);
+            transform: rotate(5deg);
+            z-index: 2;
+            color: #0c1a06;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .floating-card-emerald {
+            position: absolute;
+            width: 270px;
+            height: 165px;
+            background: linear-gradient(135deg, #003527 0%, #064e3b 100%);
+            border-radius: 18px;
+            padding: 1.25rem;
+            bottom: 35px;
+            left: 25px;
+            box-shadow: 0 24px 48px -12px rgba(6, 78, 59, 0.4);
+            transform: rotate(-7deg);
+            z-index: 3;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .floating-stat-pill {
+            position: absolute;
+            top: 25px;
+            left: 40px;
+            background: #ffffff;
+            border-radius: 14px;
+            padding: 0.6rem 0.9rem;
+            border: 1px solid var(--border-hairline);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+            z-index: 4;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .mini-bars {
+            display: flex;
+            align-items: flex-end;
+            gap: 3px;
+            height: 18px;
+        }
+
+        .mini-bar {
+            width: 4px;
+            background: #b1f818;
+            border-radius: 2px;
+        }
+
+        /* Form Card */
+        .auth-card {
+            background: var(--surface-card);
+            border: 1px solid var(--border-hairline);
+            border-radius: var(--radius-card);
+            padding: 2.25rem;
+            box-shadow: var(--shadow-subtle);
+        }
+
+        .form-group {
+            margin-bottom: 1.15rem;
         }
 
         .form-label {
             display: block;
             margin-bottom: 0.45rem;
-            font-size: 0.85rem;
-            font-weight: 500;
-            color: var(--text-muted);
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            letter-spacing: 0.01em;
         }
 
-        .form-input {
+        .form-input-pill {
             width: 100%;
-            padding: 0.75rem 1rem;
-            background: var(--input-bg);
-            border: 1px solid var(--card-border);
-            border-radius: var(--radius-md);
-            color: var(--text-main);
-            font-size: 0.95rem;
+            padding: 0.75rem 1.25rem;
+            background: var(--surface-card-subtle);
+            border: 1px solid var(--border-hairline);
+            border-radius: var(--radius-pill);
+            color: var(--text-dark);
+            font-size: 0.9rem;
             outline: none;
-            transition: border-color 0.2s, box-shadow 0.2s;
+            transition: all 0.2s;
         }
 
-        .form-input:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px var(--primary-glow);
+        .form-input-pill:focus {
+            background: #ffffff;
+            border-color: var(--primary-emerald);
+            box-shadow: 0 0 0 3px rgba(6, 78, 59, 0.12);
         }
 
-        .form-hint {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            margin-top: 0.35rem;
-        }
-
-        /* Demo Account Banner */
-        .demo-box {
-            background: rgba(79, 70, 229, 0.08);
-            border: 1px dashed rgba(79, 70, 229, 0.3);
-            border-radius: var(--radius-md);
-            padding: 0.9rem;
+        .demo-chip-box {
+            background: #f7fceb;
+            border: 1px dashed rgba(177, 248, 24, 0.8);
+            border-radius: 14px;
+            padding: 0.85rem;
             margin-top: 1.25rem;
             font-size: 0.8rem;
             color: var(--text-muted);
         }
 
-        .demo-box code {
-            color: #a5b4fc;
-            background: rgba(0, 0, 0, 0.3);
-            padding: 0.15rem 0.4rem;
-            border-radius: 4px;
+        .demo-chip-box code {
+            background: #ffffff;
+            padding: 0.15rem 0.5rem;
+            border-radius: 6px;
             font-family: monospace;
+            font-weight: 700;
+            color: var(--primary-deep);
+            border: 1px solid var(--border-hairline);
         }
 
-        /* Dashboard Overview Grid */
-        .overview-grid {
+        /* Dashboard Obsidian Device Widget */
+        .dashboard-hero-grid {
             display: grid;
-            grid-template-columns: 1.3fr 1fr;
-            gap: 1.5rem;
+            grid-template-columns: 1.25fr 1fr;
+            gap: 1.75rem;
             margin-bottom: 2rem;
         }
 
-        @media (max-width: 768px) {
-            .overview-grid {
+        @media (max-width: 860px) {
+            .dashboard-hero-grid {
                 grid-template-columns: 1fr;
             }
         }
 
-        .balance-card {
-            background: linear-gradient(135deg, rgba(79, 70, 229, 0.25) 0%, rgba(6, 182, 212, 0.15) 100%), var(--card-bg);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            border-radius: var(--radius-lg);
-            padding: 2rem;
+        .obsidian-card {
+            background: var(--surface-obsidian);
+            border-radius: var(--radius-card);
+            padding: 2.25rem;
+            color: #ffffff;
+            box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.35);
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -596,105 +759,138 @@ BASE_TEMPLATE = """
             overflow: hidden;
         }
 
-        .balance-card::after {
-            content: "APEX";
+        .obsidian-card::before {
+            content: "";
             position: absolute;
-            right: -10px;
-            bottom: -20px;
-            font-size: 7rem;
-            font-weight: 900;
-            color: rgba(255, 255, 255, 0.03);
+            top: -40%;
+            right: -20%;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(177, 248, 24, 0.12) 0%, transparent 70%);
             pointer-events: none;
         }
 
-        .balance-label {
-            font-size: 0.875rem;
-            font-weight: 500;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        .balance-value {
-            font-size: 2.75rem;
-            font-weight: 800;
-            letter-spacing: -0.03em;
-            margin: 0.5rem 0 1.25rem 0;
-            background: linear-gradient(to right, #ffffff, #cbd5e1);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .account-chip {
-            display: flex;
-            align-items: center;
-            gap: 0.6rem;
-            font-size: 0.85rem;
-            color: #cbd5e1;
-        }
-
-        .account-chip code {
-            background: rgba(0, 0, 0, 0.4);
-            padding: 0.25rem 0.6rem;
-            border-radius: 6px;
-            font-family: monospace;
-            font-size: 0.95rem;
-            letter-spacing: 0.05em;
-            color: #38bdf8;
-            border: 1px solid rgba(56, 189, 248, 0.2);
-        }
-
-        /* Quick Action Panels */
-        .actions-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 1.25rem;
-            margin-bottom: 2rem;
-        }
-
-        .action-card {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: var(--radius-md);
-            padding: 1.5rem;
-            backdrop-filter: blur(12px);
-        }
-
-        .action-card h3 {
-            font-size: 1.05rem;
-            margin-bottom: 0.35rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .action-card p {
-            color: var(--text-muted);
-            font-size: 0.8rem;
-            margin-bottom: 1rem;
-        }
-
-        /* History Table */
-        .table-card {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: var(--radius-lg);
-            overflow: hidden;
-            backdrop-filter: blur(12px);
-            margin-bottom: 2.5rem;
-        }
-
-        .table-header {
-            padding: 1.25rem 1.75rem;
-            border-bottom: 1px solid var(--card-border);
+        .obsidian-top {
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
-        .table-title {
-            font-size: 1.15rem;
+        .currency-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255, 255, 255, 0.08);
+            padding: 0.35rem 0.8rem;
+            border-radius: var(--radius-pill);
+            font-size: 0.78rem;
+            font-weight: 600;
+            border: 1px solid var(--border-dark-hairline);
+        }
+
+        .balance-label {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 1.5rem;
+        }
+
+        .numeric-balance {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 3rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            font-variant-numeric: tabular-nums;
+            margin: 0.35rem 0 1.5rem 0;
+            color: #ffffff;
+        }
+
+        .action-dock {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .dock-pill {
+            background: rgba(255, 255, 255, 0.08);
+            color: #ffffff;
+            border: 1px solid var(--border-dark-hairline);
+            padding: 0.45rem 1rem;
+            border-radius: var(--radius-pill);
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        /* Profile & Security Card */
+        .profile-card {
+            background: var(--surface-card);
+            border: 1px solid var(--border-hairline);
+            border-radius: var(--radius-card);
+            padding: 2rem;
+            box-shadow: var(--shadow-subtle);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        /* Quick Action 4-Cards Grid */
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.25rem;
+            margin-bottom: 2.25rem;
+        }
+
+        .action-card {
+            background: var(--surface-card);
+            border: 1px solid var(--border-hairline);
+            border-radius: var(--radius-card-sm);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-subtle);
+            transition: transform 0.2s;
+        }
+
+        .action-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .action-card h3 {
+            font-size: 1.05rem;
             font-weight: 700;
+            margin-bottom: 0.35rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--primary-deep);
+        }
+
+        .action-card p {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 1.15rem;
+        }
+
+        /* Transaction Feed Card */
+        .feed-card {
+            background: var(--surface-card);
+            border: 1px solid var(--border-hairline);
+            border-radius: var(--radius-card);
+            overflow: hidden;
+            box-shadow: var(--shadow-subtle);
+            margin-bottom: 2.5rem;
+        }
+
+        .feed-header {
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border-hairline);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         .table-responsive {
@@ -705,24 +901,24 @@ BASE_TEMPLATE = """
             width: 100%;
             border-collapse: collapse;
             text-align: left;
-            font-size: 0.9rem;
         }
 
         th {
-            padding: 1rem 1.75rem;
+            padding: 1rem 2rem;
+            font-size: 0.75rem;
+            font-weight: 700;
             color: var(--text-muted);
-            font-weight: 600;
-            font-size: 0.78rem;
             text-transform: uppercase;
             letter-spacing: 0.05em;
-            background: rgba(15, 23, 42, 0.4);
-            border-bottom: 1px solid var(--card-border);
+            background: #fafbfd;
+            border-bottom: 1px solid var(--border-hairline);
         }
 
         td {
-            padding: 1.1rem 1.75rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-            color: #e2e8f0;
+            padding: 1.15rem 2rem;
+            border-bottom: 1px solid var(--border-hairline);
+            font-size: 0.875rem;
+            color: var(--text-dark);
         }
 
         tr:last-child td {
@@ -730,50 +926,50 @@ BASE_TEMPLATE = """
         }
 
         tr:hover td {
-            background: rgba(255, 255, 255, 0.02);
-        }
-
-        .badge {
-            display: inline-block;
-            padding: 0.25rem 0.6rem;
-            border-radius: 6px;
-            font-size: 0.75rem;
-            font-weight: 600;
+            background: #fbfcfe;
         }
 
         .badge-credit {
-            background: rgba(16, 185, 129, 0.15);
-            color: #6ee7b7;
-            border: 1px solid rgba(16, 185, 129, 0.3);
+            background: #eefcf3;
+            color: var(--primary-emerald);
+            border: 1px solid #bbf2d0;
+            padding: 0.25rem 0.65rem;
+            border-radius: var(--radius-pill);
+            font-size: 0.75rem;
+            font-weight: 700;
         }
 
         .badge-debit {
-            background: rgba(239, 68, 68, 0.15);
-            color: #fca5a5;
-            border: 1px solid rgba(239, 68, 68, 0.3);
+            background: #fdf2f2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+            padding: 0.25rem 0.65rem;
+            border-radius: var(--radius-pill);
+            font-size: 0.75rem;
+            font-weight: 700;
         }
 
-        .badge-neutral {
-            background: rgba(148, 163, 184, 0.15);
-            color: #cbd5e1;
-            border: 1px solid rgba(148, 163, 184, 0.3);
+        .amount-credit {
+            color: var(--primary-emerald);
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
         }
 
-        .empty-history {
-            padding: 3rem 1rem;
-            text-align: center;
-            color: var(--text-muted);
-            font-size: 0.9rem;
+        .amount-debit {
+            color: var(--text-dark);
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
         }
 
         /* Footer */
         .footer {
+            padding: 2rem;
             text-align: center;
-            padding: 1.5rem;
-            color: var(--text-muted);
             font-size: 0.8rem;
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            color: var(--text-muted);
+            border-top: 1px solid var(--border-hairline);
             margin-top: auto;
+            background: var(--surface-card);
         }
 
         @keyframes fadeIn {
@@ -783,29 +979,33 @@ BASE_TEMPLATE = """
     </style>
 </head>
 <body>
+    <!-- Top Navigation -->
     <nav class="navbar">
         <a href="/" class="brand">
-            <div class="brand-icon">🏦</div>
+            <div class="brand-badge">⚡</div>
             <span>ApexBank</span>
         </a>
+        <ul class="nav-links">
+            <li><a href="#features" class="nav-link">Features</a></li>
+            <li><a href="#security" class="nav-link">Security</a></li>
+            <li><a href="#pricing" class="nav-link">Transfers</a></li>
+        </ul>
         <div class="nav-actions">
-            <div class="db-badge">
-                <span>🗄️</span>
+            <div class="db-pill">
+                <span class="dot-pulse"></span>
                 <span>{{ db_type }}</span>
             </div>
             {% if session.get('account_no') %}
-                <div class="user-pill">
-                    <span class="dot-online"></span>
-                    <span>Acc: <strong>{{ session.get('account_no') }}</strong></span>
-                </div>
+                <span style="font-size: 0.85rem; font-weight: 600;">Acc #{{ session.get('account_no') }}</span>
                 <a href="{{ url_for('logout') }}" class="btn btn-danger btn-sm">Logout</a>
             {% else %}
-                <a href="{{ url_for('index') }}" class="btn btn-secondary btn-sm">Login</a>
-                <a href="{{ url_for('register_view') }}" class="btn btn-primary btn-sm">Create Account</a>
+                <a href="{{ url_for('index') }}" class="btn btn-ghost btn-sm">Log in</a>
+                <a href="{{ url_for('register_view') }}" class="btn btn-lime btn-sm">Get Started</a>
             {% endif %}
         </div>
     </nav>
 
+    <!-- Main Content Container -->
     <div class="container">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
@@ -829,8 +1029,9 @@ BASE_TEMPLATE = """
         {% block content %}{% endblock %}
     </div>
 
+    <!-- Minimalist Footer -->
     <footer class="footer">
-        <p>ApexBank System &bull; Database: {{ db_type }} &bull; Serverless Ready</p>
+        <p>ApexBank Neo-Fintech &bull; Engine: {{ db_type }} &bull; Institutional Security &amp; Kinetic Speed</p>
     </footer>
 </body>
 </html>
@@ -840,61 +1041,81 @@ LOGIN_REGISTER_TEMPLATE = (
     BASE_TEMPLATE.replace(
         "{% block content %}{% endblock %}",
         """
-    <div class="auth-container">
-        <div class="card">
-            {% if mode == 'register' %}
-                <div class="card-header">
-                    <h2 class="card-title">Open New Account</h2>
-                    <p class="card-subtitle">Generate a 6-digit account and start banking in seconds</p>
-                </div>
-                <form method="POST" action="{{ url_for('create_account') }}">
-                    <div class="form-group">
-                        <label class="form-label">Full Name</label>
-                        <input type="text" name="name" class="form-input" placeholder="e.g. John Doe" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Phone Number</label>
-                        <input type="tel" name="phone" class="form-input" placeholder="e.g. 9876543210" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Security PIN (4-Digits)</label>
-                        <input type="password" name="pin" maxlength="4" pattern="[0-9]{4}" class="form-input" placeholder="••••" required>
-                        <div class="form-hint">Must be exactly 4 numeric digits.</div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Initial Deposit ($)</label>
-                        <input type="number" step="0.01" min="0" name="initial_deposit" class="form-input" placeholder="0.00" value="0.00">
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-block">Generate Account</button>
-                    <div style="text-align: center; margin-top: 1.25rem; font-size: 0.85rem; color: var(--text-muted);">
-                        Already have an account? <a href="{{ url_for('index') }}" style="color: #818cf8; text-decoration: none; font-weight: 600;">Sign in here</a>
-                    </div>
-                </form>
-            {% else %}
-                <div class="card-header">
-                    <h2 class="card-title">Welcome Back</h2>
-                    <p class="card-subtitle">Sign in to your ApexBank account</p>
-                </div>
-                <form method="POST" action="{{ url_for('login') }}">
-                    <div class="form-group">
-                        <label class="form-label">6-Digit Account Number</label>
-                        <input type="text" name="account_no" class="form-input" placeholder="e.g. 100001" maxlength="6" pattern="[0-9]{6}" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">4-Digit PIN</label>
-                        <input type="password" name="pin" maxlength="4" pattern="[0-9]{4}" class="form-input" placeholder="••••" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-block">Login to Account</button>
-                    <div style="text-align: center; margin-top: 1.25rem; font-size: 0.85rem; color: var(--text-muted);">
-                        New to ApexBank? <a href="{{ url_for('register_view') }}" style="color: #818cf8; text-decoration: none; font-weight: 600;">Create an account</a>
-                    </div>
-                </form>
+    <div class="hero-layout">
+        <!-- Hero Editorial Left Column -->
+        <div>
+            <h1 class="hero-headline">
+                Your Partner in Smarter <span class="badge-pill-lime">Financial Decisions</span>
+            </h1>
+            <p class="hero-subhead">
+                Take control of your money with tools designed to help you save more, invest wisely, and plan ahead — effortlessly with bank-grade security.
+            </p>
+            
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                {% if mode == 'register' %}
+                    <a href="{{ url_for('index') }}" class="btn btn-ghost">Already have an account? Sign In</a>
+                {% else %}
+                    <a href="{{ url_for('register_view') }}" class="btn btn-lime">Open an Account &rarr;</a>
+                {% endif %}
+            </div>
 
-                <div class="demo-box">
-                    <strong>💡 Demo Test Account:</strong><br>
-                    Account No: <code>100001</code> &bull; PIN: <code>1234</code>
-                </div>
-            {% endif %}
+            <div class="tag-pills">
+                <span class="tag-pill">Market Insights</span>
+                <span class="tag-pill">Zero Hidden Fees</span>
+                <span class="tag-pill">Instant Transfers</span>
+                <span class="tag-pill">PostgreSQL Engine</span>
+                <span class="tag-pill">256-Bit Encryption</span>
+            </div>
+        </div>
+
+        <!-- Right Column: Interactive Form & 3D Cards Metaphor -->
+        <div>
+            <div class="auth-card">
+                {% if mode == 'register' %}
+                    <h2 style="font-size: 1.45rem; font-weight: 800; margin-bottom: 0.35rem; color: var(--primary-deep);">Create Account</h2>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem;">Auto-generates a unique 6-digit bank account number</p>
+                    
+                    <form method="POST" action="{{ url_for('create_account') }}">
+                        <div class="form-group">
+                            <label class="form-label">Full Name</label>
+                            <input type="text" name="name" class="form-input-pill" placeholder="e.g. Bianca Taylor" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Phone Number</label>
+                            <input type="tel" name="phone" class="form-input-pill" placeholder="e.g. 9876543210" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Security PIN (4-Digits)</label>
+                            <input type="password" name="pin" maxlength="4" pattern="[0-9]{4}" class="form-input-pill" placeholder="••••" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Initial Deposit ($)</label>
+                            <input type="number" step="0.01" min="0" name="initial_deposit" class="form-input-pill" placeholder="0.00" value="0.00">
+                        </div>
+                        <button type="submit" class="btn btn-lime btn-block" style="padding: 0.85rem;">Generate Account</button>
+                    </form>
+                {% else %}
+                    <h2 style="font-size: 1.45rem; font-weight: 800; margin-bottom: 0.35rem; color: var(--primary-deep);">Welcome Back</h2>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem;">Sign in to your ApexBank neo-account</p>
+
+                    <form method="POST" action="{{ url_for('login') }}">
+                        <div class="form-group">
+                            <label class="form-label">6-Digit Account Number</label>
+                            <input type="text" name="account_no" class="form-input-pill" placeholder="e.g. 100001" maxlength="6" pattern="[0-9]{6}" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">4-Digit Security PIN</label>
+                            <input type="password" name="pin" maxlength="4" pattern="[0-9]{4}" class="form-input-pill" placeholder="••••" required>
+                        </div>
+                        <button type="submit" class="btn btn-lime btn-block" style="padding: 0.85rem;">Log In to Account</button>
+                    </form>
+
+                    <div class="demo-chip-box">
+                        <strong>💡 Pre-Seeded Demo Account:</strong><br>
+                        Account Number: <code>100001</code> &bull; PIN: <code>1234</code>
+                    </div>
+                {% endif %}
+            </div>
         </div>
     </div>
 """,
@@ -905,106 +1126,135 @@ DASHBOARD_TEMPLATE = (
     BASE_TEMPLATE.replace(
         "{% block content %}{% endblock %}",
         """
-    <!-- Overview Balance & Details -->
-    <div class="overview-grid">
-        <div class="balance-card">
-            <div>
-                <span class="balance-label">Available Balance</span>
-                <div class="balance-value">${{ "%.2f"|format(account.balance) }}</div>
+    <!-- Dashboard Hero Grid -->
+    <div class="dashboard-hero-grid">
+        <!-- Obsidian Dark Interactive Balance Card -->
+        <div class="obsidian-card">
+            <div class="obsidian-top">
+                <div class="currency-chip">
+                    <span>🇺🇸</span>
+                    <span>US Dollar</span>
+                </div>
+                <div style="font-size: 0.8rem; color: #94a3b8;">
+                    Acc: <code style="color: var(--secondary-lime); font-weight: 700; background: rgba(255,255,255,0.06); padding: 0.2rem 0.5rem; border-radius: 6px;">{{ account_no }}</code>
+                </div>
             </div>
-            <div class="account-chip">
-                <span>Account Number:</span>
-                <code>{{ account_no }}</code>
-                <span style="margin-left: auto; color: var(--text-muted); font-size: 0.8rem;">Status: <strong style="color: var(--success);">Active</strong></span>
+
+            <div>
+                <div class="balance-label">Available Total Balance</div>
+                <div class="numeric-balance">${{ "%.2f"|format(account.balance) }}</div>
+            </div>
+
+            <div class="action-dock">
+                <span class="dock-pill"><span>⚏</span> Scan QR</span>
+                <span class="dock-pill"><span>📥</span> Request</span>
+                <span class="dock-pill"><span>🔄</span> Direct Wire</span>
+                <span style="width: 32px; height: 32px; border-radius: 50%; background: var(--secondary-lime); color: var(--text-dark); display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.1rem; margin-left: auto;">+</span>
             </div>
         </div>
 
-        <div class="card" style="display: flex; flex-direction: column; justify-content: center;">
-            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
-                <div style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #4f46e5, #06b6d4); display: flex; align-items: center; justify-content: center; font-size: 1.25rem;">
-                    👤
+        <!-- Profile & Account Details Card -->
+        <div class="profile-card">
+            <div>
+                <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem;">
+                    <div style="width: 48px; height: 48px; border-radius: 14px; background: #eef8f3; color: var(--primary-emerald); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; font-weight: 800;">
+                        👤
+                    </div>
+                    <div>
+                        <h2 style="font-size: 1.25rem; font-weight: 800; color: var(--primary-deep);">{{ account.name }}</h2>
+                        <p style="color: var(--text-muted); font-size: 0.85rem;">Phone: {{ account.phone }}</p>
+                    </div>
                 </div>
-                <div>
-                    <h3 style="font-size: 1.15rem; font-weight: 700;">{{ account.name }}</h3>
-                    <p style="color: var(--text-muted); font-size: 0.85rem;">Phone: {{ account.phone }}</p>
+
+                <div style="background: var(--surface-card-subtle); padding: 1rem; border-radius: 1rem; border: 1px solid var(--border-hairline);">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.85rem;">
+                        <span style="color: var(--text-muted);">Database Storage:</span>
+                        <strong style="color: var(--primary-emerald);">{{ db_type }}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; font-size: 0.85rem;">
+                        <span style="color: var(--text-muted);">Account Activity:</span>
+                        <strong>{{ account.transactions|length }} Events Logged</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.85rem;">
+                        <span style="color: var(--text-muted);">Security Standard:</span>
+                        <span style="color: var(--primary-emerald); font-weight: 700;">PIN Encrypted</span>
+                    </div>
                 </div>
             </div>
-            <div style="background: rgba(15, 23, 42, 0.6); padding: 0.85rem; border-radius: 8px; font-size: 0.85rem; border: 1px solid var(--card-border);">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 0.35rem;">
-                    <span style="color: var(--text-muted);">Total Transactions:</span>
-                    <strong>{{ account.transactions|length }}</strong>
-                </div>
-                <div style="display: flex; justify-content: space-between;">
-                    <span style="color: var(--text-muted);">Security Status:</span>
-                    <span style="color: var(--success); font-weight: 600;">PIN Protected</span>
-                </div>
+
+            <div style="margin-top: 1.5rem; display: flex; gap: 0.75rem;">
+                <span class="badge-credit" style="font-size: 0.8rem; padding: 0.4rem 0.9rem;">Verified Client</span>
+                <span class="badge-credit" style="font-size: 0.8rem; padding: 0.4rem 0.9rem;">Tier 1 Liquid</span>
             </div>
         </div>
     </div>
 
-    <!-- Quick Financial Action Cards -->
-    <h2 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem;">Quick Actions</h2>
+    <!-- Quick Financial Actions Grid -->
+    <h2 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 1rem; color: var(--primary-deep);">Financial Operations</h2>
     <div class="actions-grid">
         <!-- Deposit Money -->
         <div class="action-card">
             <h3><span>📥</span> Deposit Funds</h3>
-            <p>Add funds instantly into your bank balance.</p>
+            <p>Instantly credit funds to your balance.</p>
             <form method="POST" action="{{ url_for('deposit') }}">
                 <div class="form-group">
-                    <input type="number" step="0.01" min="0.01" name="amount" class="form-input" placeholder="Amount ($)" required>
+                    <input type="number" step="0.01" min="0.01" name="amount" class="form-input-pill" placeholder="Amount ($)" required>
                 </div>
-                <button type="submit" class="btn btn-primary btn-block">Deposit</button>
+                <button type="submit" class="btn btn-lime btn-block">Deposit</button>
             </form>
         </div>
 
         <!-- Withdraw Money -->
         <div class="action-card">
             <h3><span>📤</span> Withdraw Funds</h3>
-            <p>Withdraw money with real-time balance validation.</p>
+            <p>Withdraw with overdraft protection.</p>
             <form method="POST" action="{{ url_for('withdraw') }}">
                 <div class="form-group">
-                    <input type="number" step="0.01" min="0.01" name="amount" class="form-input" placeholder="Amount ($)" required>
+                    <input type="number" step="0.01" min="0.01" name="amount" class="form-input-pill" placeholder="Amount ($)" required>
                 </div>
-                <button type="submit" class="btn btn-secondary btn-block">Withdraw</button>
+                <button type="submit" class="btn btn-forest btn-block">Withdraw</button>
             </form>
         </div>
 
         <!-- Transfer Funds -->
         <div class="action-card">
             <h3><span>🔄</span> Transfer Money</h3>
-            <p>Send funds to another 6-digit bank account.</p>
+            <p>Direct wire to another 6-digit account.</p>
             <form method="POST" action="{{ url_for('transfer') }}">
-                <div class="form-group" style="margin-bottom: 0.75rem;">
-                    <input type="text" name="recipient_acc" class="form-input" placeholder="Recipient Acc # (6 digits)" maxlength="6" pattern="[0-9]{6}" required>
+                <div class="form-group" style="margin-bottom: 0.65rem;">
+                    <input type="text" name="recipient_acc" class="form-input-pill" placeholder="Recipient Acc # (6 digits)" maxlength="6" pattern="[0-9]{6}" required>
                 </div>
                 <div class="form-group">
-                    <input type="number" step="0.01" min="0.01" name="amount" class="form-input" placeholder="Amount ($)" required>
+                    <input type="number" step="0.01" min="0.01" name="amount" class="form-input-pill" placeholder="Amount ($)" required>
                 </div>
-                <button type="submit" class="btn btn-primary btn-block">Send Transfer</button>
+                <button type="submit" class="btn btn-lime btn-block">Send Transfer</button>
             </form>
         </div>
 
         <!-- Change PIN -->
         <div class="action-card">
-            <h3><span>🔑</span> Change PIN</h3>
-            <p>Update your 4-digit security PIN credentials.</p>
+            <h3><span>🔑</span> Security PIN</h3>
+            <p>Update your 4-digit security PIN.</p>
             <form method="POST" action="{{ url_for('change_pin') }}">
-                <div class="form-group" style="margin-bottom: 0.75rem;">
-                    <input type="password" name="old_pin" class="form-input" placeholder="Current PIN" maxlength="4" pattern="[0-9]{4}" required>
+                <div class="form-group" style="margin-bottom: 0.65rem;">
+                    <input type="password" name="old_pin" class="form-input-pill" placeholder="Current PIN" maxlength="4" pattern="[0-9]{4}" required>
                 </div>
                 <div class="form-group">
-                    <input type="password" name="new_pin" class="form-input" placeholder="New 4-Digit PIN" maxlength="4" pattern="[0-9]{4}" required>
+                    <input type="password" name="new_pin" class="form-input-pill" placeholder="New PIN" maxlength="4" pattern="[0-9]{4}" required>
                 </div>
-                <button type="submit" class="btn btn-secondary btn-block">Update PIN</button>
+                <button type="submit" class="btn btn-forest btn-block">Update PIN</button>
             </form>
         </div>
     </div>
 
-    <!-- Transaction History Table -->
-    <div class="table-card">
-        <div class="table-header">
-            <span class="table-title">📜 Transaction History</span>
-            <span style="font-size: 0.8rem; color: var(--text-muted);">Timestamped via datetime module</span>
+    <!-- Transaction Ledger Table -->
+    <div class="feed-card">
+        <div class="feed-header">
+            <div>
+                <h3 style="font-size: 1.15rem; font-weight: 800; color: var(--primary-deep);">📜 Transaction Ledger</h3>
+                <p style="font-size: 0.8rem; color: var(--text-muted);">Timestamped via Python datetime module</p>
+            </div>
+            <span class="db-pill">Live Ledger</span>
         </div>
         <div class="table-responsive">
             {% if account.transactions %}
@@ -1012,7 +1262,7 @@ DASHBOARD_TEMPLATE = (
                     <thead>
                         <tr>
                             <th>Date &amp; Time</th>
-                            <th>Operation Type</th>
+                            <th>Operation</th>
                             <th>Description</th>
                             <th>Amount</th>
                             <th>Post Balance</th>
@@ -1024,25 +1274,27 @@ DASHBOARD_TEMPLATE = (
                                 <td style="color: var(--text-muted); font-size: 0.85rem;">{{ tx.timestamp }}</td>
                                 <td>
                                     {% if 'Deposit' in tx.type or 'Received' in tx.type %}
-                                        <span class="badge badge-credit">{{ tx.type }}</span>
-                                    {% elif 'Withdraw' in tx.type or 'Sent' in tx.type %}
-                                        <span class="badge badge-debit">{{ tx.type }}</span>
+                                        <span class="badge-credit">{{ tx.type }}</span>
                                     {% else %}
-                                        <span class="badge badge-neutral">{{ tx.type }}</span>
+                                        <span class="badge-debit">{{ tx.type }}</span>
                                     {% endif %}
                                 </td>
                                 <td>{{ tx.details }}</td>
-                                <td style="font-weight: 700; color: {% if 'Deposit' in tx.type or 'Received' in tx.type %}#6ee7b7{% elif 'Withdraw' in tx.type or 'Sent' in tx.type %}#fca5a5{% else %}#f8fafc{% endif %};">
-                                    {% if 'Deposit' in tx.type or 'Received' in tx.type %}+{% elif 'Withdraw' in tx.type or 'Sent' in tx.type %}-{% endif %}${{ "%.2f"|format(tx.amount) }}
+                                <td>
+                                    {% if 'Deposit' in tx.type or 'Received' in tx.type %}
+                                        <span class="amount-credit">+${{ "%.2f"|format(tx.amount) }}</span>
+                                    {% else %}
+                                        <span class="amount-debit">-${{ "%.2f"|format(tx.amount) }}</span>
+                                    {% endif %}
                                 </td>
-                                <td style="font-weight: 600;">${{ "%.2f"|format(tx.balance) }}</td>
+                                <td style="font-weight: 600; font-variant-numeric: tabular-nums;">${{ "%.2f"|format(tx.balance) }}</td>
                             </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             {% else %}
-                <div class="empty-history">
-                    No transactions recorded yet. Perform a deposit or transfer to see activity!
+                <div style="padding: 3rem; text-align: center; color: var(--text-muted); font-size: 0.9rem;">
+                    No transactions recorded yet. Make a deposit to start your ledger!
                 </div>
             {% endif %}
         </div>
@@ -1064,7 +1316,7 @@ def index():
     return render_template_string(
         LOGIN_REGISTER_TEMPLATE,
         mode="login",
-        title="ApexBank – Login",
+        title="ApexBank – Neo-Fintech Kinetic",
         db_type=DatabaseManager.get_db_type(),
     )
 
